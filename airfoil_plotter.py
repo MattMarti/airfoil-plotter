@@ -1,10 +1,21 @@
+# Python 3
+
 import tkinter as tk
 from tkinter import filedialog
 import logging
 
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
+
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.figure import Figure
+
+
+GUI_BUTTON_WIDTH = 20
+GUI_BUTTON_PADDING = 20
+
 
 def thickness(x, t):
     """
@@ -65,13 +76,136 @@ def lower(x, m, p, t):
     return yl, xl
 
 
+class NacaFourDigit:
+    
+    def __init__(self):
+        self.m = 0
+        self.p = 3
+        self.t = 10
+    
+    
+    def set_gui_options(self, frame):
+        naca_digit_label = tk.Label(
+            master=frame,
+            text='NACA 4 Digit')
+        naca_digit_label.pack(side=tk.TOP)
+        
+        p_frame = tk.Frame(master=frame)
+        p_frame.pack(side=tk.TOP)
+        
+        p_label = tk.Label(
+            p_frame,
+            text='P',
+            width=round(GUI_BUTTON_WIDTH/2))
+        p_label.pack(side=tk.LEFT)
+        
+        p_entry = tk.Entry(
+            p_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        p_entry.pack(side=tk.RIGHT)
+        
+        m_frame = tk.Frame(master=frame)
+        m_frame.pack(side=tk.TOP)
+        
+        m_label = tk.Label(
+            m_frame,
+            text='M',
+            width=round(GUI_BUTTON_WIDTH/2))
+        m_label.pack(side=tk.LEFT)
+        
+        m_entry = tk.Entry(
+            m_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        m_entry.pack(side=tk.RIGHT)
+        
+        t_frame = tk.Frame(master=frame)
+        t_frame.pack(side=tk.TOP)
+        
+        t_label = tk.Label(
+            t_frame,
+            text='T',
+            width=round(GUI_BUTTON_WIDTH/2))
+        t_label.pack(side=tk.LEFT)
+        
+        t_entry = tk.Entry(
+            t_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        t_entry.pack(side=tk.RIGHT)
+
+
+class AirfoilGui:
+    def __init__(self):
+        self.imported_x = None
+        self.imported_y = None
+        
+        self.param = None
+    
+    
+    def quit(self, root):
+        root.quit()
+        root.destroy()
+
+
+def update_plot_callback(fig):
+    ax = fig.axes[0]
+    line = ax.lines[0]
+    line.set_xdata(time_list)
+    line.set_ydata(Temp_list)
+    ax.set_xlim(min_time - p*range_time, max_time + p*range_time)
+    ax.set_ylim(min_Temp - p*range_Temp, max_Temp + p*range_Temp)
+    fig.canvas.draw()
+
+
 def main():
     root = tk.Tk()
-    root.withdraw()
+    root.title('Airfoil Plotter')
     
-    filename = tk.filedialog.askopenfilename(
-        title="Select the airfoil surface points file",
-        filetypes = [("Airfoil Surface Points", ".dat")])
+    # Figure
+    fig = Figure(figsize=(5,4), dpi=100)
+    ax = fig.add_subplot(111)
+    
+    canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
+    canvas.draw()
+    
+    toolbar = NavigationToolbar2Tk(canvas, root, pack_toolbar=False)
+    toolbar.update()
+    
+    toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    
+    
+    # Settings
+    settings_frame = tk.Frame(master=root)
+    settings_frame.pack(side=tk.RIGHT)
+    
+    
+    # Digit Settings
+    naca_digit_frame = tk.Frame(master=settings_frame)
+    naca_digit_frame.pack(side=tk.TOP)
+    
+    naca_data = NacaFourDigit()
+    naca_data.set_gui_options(naca_digit_frame)
+    
+    
+    # Plotting
+    ok_button = tk.Button(
+        settings_frame,
+        text='Plot',
+        width=round(GUI_BUTTON_WIDTH/2),
+        command=lambda: quit(root))
+    ok_button.pack(side=tk.BOTTOM)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    filename = "C:/Users/Matt Marti/Documents/Personal/Projects/RC/Stratosurfer/Airfoil Analysis/stratosurfer.dat"#tk.filedialog.askfilename(title="Select the airfoil data file")
     
     dat_raw = np.loadtxt(filename, delimiter=' ')
 
@@ -81,18 +215,18 @@ def main():
     dat_lower = dat_raw[~idum,:]
     
     # Initial guess
-    m = 3 / 100
+    m = 5 / 100
     p = 3 / 10
-    t = 10 / 100
+    t = 8 / 100
     
     # Solve airfoil
-    xu = dat_raw[idum, 0]
+    xu = np.arange(1, 0, -0.0001)
     yu, xu = upper(xu, m, p, t)
-    xl = dat_raw[~idum, 0]
+    xl = np.arange(0, 1, 0.0001)
     yl, xl = lower(xl, m, p, t)
     
+    
     # Print out airfoil plot
-    fig, ax = plt.subplots(1,1)
     ax.plot(dat_raw[:,0], dat_raw[:,1])
     ax.plot(np.concatenate((xu,xl)), np.concatenate((yu, yl), 0))
     ax.axis('equal')
@@ -100,7 +234,7 @@ def main():
     ax.minorticks_on()
     ax.grid(which='minor', linestyle='--', linewidth=0.3)
     
-    plt.show()
+    root.mainloop()
 
     
 if __name__ == '__main__':
