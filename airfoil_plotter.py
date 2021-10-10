@@ -138,30 +138,29 @@ class NacaFourDigit:
 
 class GuiData:
 
-    def __init__(self):
+    def __init__(self, fig):
+        self.fig = fig
         self.data_filename = None
         self.imported_data = None
         self.naca_params = None
-        self.ax = None
+        self.imported_chord = 1.0
     
     
-    def user_select_file_and_update(self, fig):
+    def user_select_file_and_update(self):
         self.data_filename = tk.filedialog.askopenfilename(title="Select the airfoil data file")
         if self.data_filename is not None and self.data_filename != '':
             self.import_file(self.data_filename)
-            self.plot_stuff(fig)
+            self.plot_stuff()
     
     
     def import_file(self, filename:str):
         self.imported_data = np.loadtxt(filename, delimiter=' ')
-        
-        
-    def plot_stuff(self, fig):
-        
-        # Divide in to upper and lower part
-        idum = self.imported_data[:,1] >= 0
-        dat_upper = self.imported_data[idum,:]
-        dat_lower = self.imported_data[~idum,:]
+    
+    def set_imported_chord(self, chord):
+        self.imported_chord = chord
+        self.plot_stuff()
+    
+    def plot_stuff(self):
         
         # Initial guess
         m = 5 / 100
@@ -175,15 +174,16 @@ class GuiData:
         yl, xl = lower(xl, m, p, t)
         
         # Update the plot
-        ax = fig.axes[0]
+        ax = self.fig.axes[0]
         ax.clear()
-        ax.plot(self.imported_data[:,0], self.imported_data[:,1])
+        sf = self.imported_chord
+        ax.plot(self.imported_data[:,0]/sf, self.imported_data[:,1]/sf)
         ax.plot(np.concatenate((xu,xl)), np.concatenate((yu, yl), 0))
         ax.axis('equal')
         ax.grid(which='major')
         ax.minorticks_on()
         ax.grid(which='minor', linestyle='--', linewidth=0.3)
-        fig.canvas.draw()
+        self.fig.canvas.draw()
 
 
 def quit_gui(self, root):
@@ -194,8 +194,6 @@ def quit_gui(self, root):
 def main():
     root = tk.Tk()
     root.title('Airfoil Plotter')
-    
-    gui_data = GuiData()
     
     # Figure
     fig = Figure(figsize=(5,4), dpi=100)
@@ -209,6 +207,8 @@ def main():
     
     toolbar.pack(side=tk.BOTTOM, fill=tk.X)
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    
+    gui_data = GuiData(fig)
     
     
     # Settings
@@ -241,14 +241,27 @@ def main():
         file_select_frame,
         text='Select File',
         width=round(GUI_BUTTON_WIDTH),
-        command=lambda: gui_data.user_select_file_and_update(fig))
+        command=lambda: gui_data.user_select_file_and_update())
     file_select_button.pack(side=tk.TOP)
+    
+    chord_length_entry = tk.Entry(
+        file_select_frame,
+        width=round(GUI_BUTTON_WIDTH/2))
+    chord_length_entry.pack(side=tk.RIGHT)
+    chord_length_entry.insert(0, '1.0')
+    
+    chord_length_button = tk.Button(
+        file_select_frame,
+        text='Scale Factor',
+        width=round(GUI_BUTTON_WIDTH/2),
+        command=lambda: gui_data.set_imported_chord(float(chord_length_entry.get())))
+    chord_length_button.pack(side=tk.LEFT)
     
     
     # Fire it up
     filename = "D:\Documents\Personal\Projects\RC\Stratosurfer\Airfoil Analysis\stratosurfer.dat"#tk.filedialog.askfilename(title="Select the airfoil data file")
     gui_data.import_file(filename)
-    gui_data.plot_stuff(fig)
+    gui_data.plot_stuff()
 
     root.mainloop()
 
