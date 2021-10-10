@@ -5,7 +5,6 @@ from tkinter import filedialog
 import logging
 
 import numpy as np
-import scipy as sp
 
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -15,6 +14,10 @@ from matplotlib.figure import Figure
 
 GUI_BUTTON_WIDTH = 20
 GUI_BUTTON_PADDING = 20
+
+
+def empty_func():
+    pass
 
 
 def thickness(x, t):
@@ -133,32 +136,66 @@ class NacaFourDigit:
         t_entry.pack(side=tk.RIGHT)
 
 
-class AirfoilGui:
+class GuiData:
+
     def __init__(self):
-        self.imported_x = None
-        self.imported_y = None
+        self.data_filename = None
+        self.imported_data = None
+        self.naca_params = None
+        self.ax = None
+    
+    
+    def user_select_file_and_update(self, fig):
+        self.data_filename = tk.filedialog.askopenfilename(title="Select the airfoil data file")
+        if self.data_filename is not None and self.data_filename != '':
+            self.import_file(self.data_filename)
+            self.plot_stuff(fig)
+    
+    
+    def import_file(self, filename:str):
+        self.imported_data = np.loadtxt(filename, delimiter=' ')
         
-        self.param = None
-    
-    
-    def quit(self, root):
-        root.quit()
-        root.destroy()
+        
+    def plot_stuff(self, fig):
+        
+        # Divide in to upper and lower part
+        idum = self.imported_data[:,1] >= 0
+        dat_upper = self.imported_data[idum,:]
+        dat_lower = self.imported_data[~idum,:]
+        
+        # Initial guess
+        m = 5 / 100
+        p = 3 / 10
+        t = 8 / 100
+        
+        # Solve airfoil
+        xu = np.arange(1, 0, -0.0001)
+        yu, xu = upper(xu, m, p, t)
+        xl = np.arange(0, 1, 0.0001)
+        yl, xl = lower(xl, m, p, t)
+        
+        # Update the plot
+        ax = fig.axes[0]
+        ax.clear()
+        ax.plot(self.imported_data[:,0], self.imported_data[:,1])
+        ax.plot(np.concatenate((xu,xl)), np.concatenate((yu, yl), 0))
+        ax.axis('equal')
+        ax.grid(which='major')
+        ax.minorticks_on()
+        ax.grid(which='minor', linestyle='--', linewidth=0.3)
+        fig.canvas.draw()
 
 
-def update_plot_callback(fig):
-    ax = fig.axes[0]
-    line = ax.lines[0]
-    line.set_xdata(time_list)
-    line.set_ydata(Temp_list)
-    ax.set_xlim(min_time - p*range_time, max_time + p*range_time)
-    ax.set_ylim(min_Temp - p*range_Temp, max_Temp + p*range_Temp)
-    fig.canvas.draw()
+def quit_gui(self, root):
+    root.quit()
+    root.destroy()
 
 
 def main():
     root = tk.Tk()
     root.title('Airfoil Plotter')
+    
+    gui_data = GuiData()
     
     # Figure
     fig = Figure(figsize=(5,4), dpi=100)
@@ -181,7 +218,7 @@ def main():
     
     # Digit Settings
     naca_digit_frame = tk.Frame(master=settings_frame)
-    naca_digit_frame.pack(side=tk.TOP)
+    naca_digit_frame.pack(side=tk.RIGHT)
     
     naca_data = NacaFourDigit()
     naca_data.set_gui_options(naca_digit_frame)
@@ -189,51 +226,30 @@ def main():
     
     # Plotting
     ok_button = tk.Button(
-        settings_frame,
+        naca_digit_frame,
         text='Plot',
         width=round(GUI_BUTTON_WIDTH/2),
         command=lambda: quit(root))
     ok_button.pack(side=tk.BOTTOM)
     
     
+    # File Select
+    file_select_frame = tk.Frame(master=settings_frame)
+    file_select_frame.pack(side=tk.RIGHT)
+    
+    file_select_button = tk.Button(
+        file_select_frame,
+        text='Select File',
+        width=round(GUI_BUTTON_WIDTH),
+        command=lambda: gui_data.user_select_file_and_update(fig))
+    file_select_button.pack(side=tk.TOP)
     
     
-    
-    
-    
-    
-    
-    
-    
-    filename = "C:/Users/Matt Marti/Documents/Personal/Projects/RC/Stratosurfer/Airfoil Analysis/stratosurfer.dat"#tk.filedialog.askfilename(title="Select the airfoil data file")
-    
-    dat_raw = np.loadtxt(filename, delimiter=' ')
+    # Fire it up
+    filename = "D:\Documents\Personal\Projects\RC\Stratosurfer\Airfoil Analysis\stratosurfer.dat"#tk.filedialog.askfilename(title="Select the airfoil data file")
+    gui_data.import_file(filename)
+    gui_data.plot_stuff(fig)
 
-    # Divide in to upper and lower part
-    idum = dat_raw[:,1] >= 0
-    dat_upper = dat_raw[idum,:]
-    dat_lower = dat_raw[~idum,:]
-    
-    # Initial guess
-    m = 5 / 100
-    p = 3 / 10
-    t = 8 / 100
-    
-    # Solve airfoil
-    xu = np.arange(1, 0, -0.0001)
-    yu, xu = upper(xu, m, p, t)
-    xl = np.arange(0, 1, 0.0001)
-    yl, xl = lower(xl, m, p, t)
-    
-    
-    # Print out airfoil plot
-    ax.plot(dat_raw[:,0], dat_raw[:,1])
-    ax.plot(np.concatenate((xu,xl)), np.concatenate((yu, yl), 0))
-    ax.axis('equal')
-    ax.grid(which='major')
-    ax.minorticks_on()
-    ax.grid(which='minor', linestyle='--', linewidth=0.3)
-    
     root.mainloop()
 
     
