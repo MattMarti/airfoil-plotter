@@ -79,33 +79,18 @@ def lower(x, m, p, t):
     return yl, xl
 
 
-class NacaFourDigit:
+class NacaFourDigitFrame:
     
     def __init__(self):
         self.m = 0
         self.p = 3
         self.t = 10
     
-    
     def set_gui_options(self, frame):
         naca_digit_label = tk.Label(
             master=frame,
             text='NACA 4 Digit')
         naca_digit_label.pack(side=tk.TOP)
-        
-        p_frame = tk.Frame(master=frame)
-        p_frame.pack(side=tk.TOP)
-        
-        p_label = tk.Label(
-            p_frame,
-            text='P',
-            width=round(GUI_BUTTON_WIDTH/2))
-        p_label.pack(side=tk.LEFT)
-        
-        p_entry = tk.Entry(
-            p_frame,
-            width=round(GUI_BUTTON_WIDTH/2))
-        p_entry.pack(side=tk.RIGHT)
         
         m_frame = tk.Frame(master=frame)
         m_frame.pack(side=tk.TOP)
@@ -116,10 +101,26 @@ class NacaFourDigit:
             width=round(GUI_BUTTON_WIDTH/2))
         m_label.pack(side=tk.LEFT)
         
-        m_entry = tk.Entry(
+        self.m_entry = tk.Entry(
             m_frame,
             width=round(GUI_BUTTON_WIDTH/2))
-        m_entry.pack(side=tk.RIGHT)
+        self.m_entry.pack(side=tk.RIGHT)
+        self.m_entry.insert(0, "5")
+        
+        p_frame = tk.Frame(master=frame)
+        p_frame.pack(side=tk.TOP)
+        
+        p_label = tk.Label(
+            p_frame,
+            text='P',
+            width=round(GUI_BUTTON_WIDTH/2))
+        p_label.pack(side=tk.LEFT)
+        
+        self.p_entry = tk.Entry(
+            p_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.p_entry.pack(side=tk.RIGHT)
+        self.p_entry.insert(0, "3")
         
         t_frame = tk.Frame(master=frame)
         t_frame.pack(side=tk.TOP)
@@ -130,11 +131,37 @@ class NacaFourDigit:
             width=round(GUI_BUTTON_WIDTH/2))
         t_label.pack(side=tk.LEFT)
         
-        t_entry = tk.Entry(
+        self.t_entry = tk.Entry(
             t_frame,
             width=round(GUI_BUTTON_WIDTH/2))
-        t_entry.pack(side=tk.RIGHT)
-
+        self.t_entry.pack(side=tk.RIGHT)
+        self.t_entry.insert(0, "8")
+    
+    def get_m(self):
+        return int(self.m_entry.get()) / 100
+    
+    def get_p(self):
+        return int(self.p_entry.get()) / 10
+    
+    def get_t(self):
+        return int(self.t_entry.get()) / 100
+    
+    def get_upper_surface(self):
+        m = self.get_m()
+        p = self.get_p()
+        t = self.get_t()
+        xu = np.arange(1, 0, -0.0001)
+        yu, xu = upper(xu, m, p, t)
+        return xu, yu
+    
+    def get_lower_surface(self):
+        m = self.get_m()
+        p = self.get_p()
+        t = self.get_t()
+        xl = np.arange(0, 1, 0.0001)
+        yl, xl = lower(xl, m, p, t)
+        return xl, yl
+    
 
 class GuiData:
 
@@ -145,13 +172,11 @@ class GuiData:
         self.naca_params = None
         self.imported_chord = 1.0
     
-    
     def user_select_file_and_update(self):
         self.data_filename = tk.filedialog.askopenfilename(title="Select the airfoil data file")
         if self.data_filename is not None and self.data_filename != '':
             self.import_file(self.data_filename)
             self.plot_stuff()
-    
     
     def import_file(self, filename:str):
         self.imported_data = np.loadtxt(filename, delimiter=' ')
@@ -160,18 +185,21 @@ class GuiData:
         self.imported_chord = chord
         self.plot_stuff()
     
-    def plot_stuff(self):
+    def plot_stuff(self, naca_data_frame):
         
         # Initial guess
-        m = 5 / 100
-        p = 3 / 10
-        t = 8 / 100
+        #m = 5 / 100
+        #p = 3 / 10
+        #t = 8 / 100
         
         # Solve airfoil
-        xu = np.arange(1, 0, -0.0001)
-        yu, xu = upper(xu, m, p, t)
-        xl = np.arange(0, 1, 0.0001)
-        yl, xl = lower(xl, m, p, t)
+        #xu = np.arange(1, 0, -0.0001)
+        #yu, xu = upper(xu, m, p, t)
+        #xl = np.arange(0, 1, 0.0001)
+        #yl, xl = lower(xl, m, p, t)
+        
+        xu, yu = naca_data_frame.get_upper_surface()
+        xl, yl = naca_data_frame.get_lower_surface()
         
         # Update the plot
         ax = self.fig.axes[0]
@@ -220,8 +248,8 @@ def main():
     naca_digit_frame = tk.Frame(master=settings_frame)
     naca_digit_frame.pack(side=tk.RIGHT)
     
-    naca_data = NacaFourDigit()
-    naca_data.set_gui_options(naca_digit_frame)
+    naca_data_frame = NacaFourDigitFrame()
+    naca_data_frame.set_gui_options(naca_digit_frame)
     
     
     # Plotting
@@ -229,7 +257,7 @@ def main():
         naca_digit_frame,
         text='Plot',
         width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: quit(root))
+        command=lambda: gui_data.plot_stuff(naca_data_frame))
     ok_button.pack(side=tk.BOTTOM)
     
     
@@ -261,7 +289,7 @@ def main():
     # Fire it up
     filename = "D:\Documents\Personal\Projects\RC\Stratosurfer\Airfoil Analysis\stratosurfer.dat"#tk.filedialog.askfilename(title="Select the airfoil data file")
     gui_data.import_file(filename)
-    gui_data.plot_stuff()
+    gui_data.plot_stuff(naca_data_frame)
 
     root.mainloop()
 
