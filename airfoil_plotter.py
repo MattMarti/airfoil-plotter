@@ -39,8 +39,10 @@ def camber(x, m, p):
     dum = x <= p
     
     dyc_dm = np.zeros(x.shape)
-    dyc_dm[dum] = 1/p**2 * (2*p*x[dum] - x[dum]**2)
-    dyc_dm[~dum] = 1/(1-p)**2 * ((1-2*p)+2*p*x[~dum]-x[~dum]**2)
+    if p > 0:
+        dyc_dm[dum] = 1/p**2 * (2*p*x[dum] - x[dum]**2)
+    if p < 1:
+        dyc_dm[~dum] = 1/(1-p)**2 * ((1-2*p)+2*p*x[~dum]-x[~dum]**2)
     
     yc = m*dyc_dm
     
@@ -50,8 +52,10 @@ def camber(x, m, p):
 def camber_angle(x, m, p):
     dum = x <= p
     dyc_dx = np.zeros(x.shape)
-    dyc_dx[dum] = 2*m/p**2 * (p-x[dum])
-    dyc_dx[~dum] = 2*m/(1-p**2)*(p-x[~dum])
+    if p > 0:
+        dyc_dx[dum] = 2*m/p**2 * (p-x[dum])
+    if p < 1:
+        dyc_dx[~dum] = 2*m/(1-p**2)*(p-x[~dum])
     return np.arctan(dyc_dx)
 
 
