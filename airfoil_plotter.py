@@ -185,9 +185,9 @@ class GuiData:
     def import_file(self, filename:str):
         self.imported_data = np.loadtxt(filename, delimiter=' ')
     
-    def set_imported_chord(self, chord):
+    def set_imported_chord(self, chord, naca_data_frame):
         self.imported_chord = chord
-        self.plot_stuff()
+        self.plot_stuff(naca_data_frame)
     
     def plot_stuff(self, naca_data_frame):
         
@@ -286,7 +286,7 @@ def main():
         file_select_frame,
         text='Scale Factor',
         width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.set_imported_chord(float(chord_length_entry.get())))
+        command=lambda: gui_data.set_imported_chord(float(chord_length_entry.get()), naca_data_frame))
     chord_length_button.pack(side=tk.LEFT)
     
     
