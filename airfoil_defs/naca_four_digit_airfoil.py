@@ -17,7 +17,12 @@ class NacaFourDigitAirfoil():
         x - horizontal position (0 to 1)
         """
         t = self.t
-        dyt_dt = 5 * (0.2969 * np.sqrt(x) - 0.1260*x - 0.3516*x**2 + 0.2843*x**3 - 0.1015*x**4)
+        a_0 = 0.2969
+        a_1 = -0.126
+        a_2 = -0.3516
+        a_3 = 0.2843
+        a_4 = -0.1015
+        dyt_dt = 5 * (a_0*np.sqrt(x) + a_1*x + a_2*x**2 + a_3*x**3 + a_4*x**4)
         yt = t * dyt_dt
         return yt
 
@@ -31,9 +36,9 @@ class NacaFourDigitAirfoil():
         dum = x <= p
         dyc_dm = np.zeros(x.shape)
         if p > 0:
-            dyc_dm[dum] = 1/p**2 * (2*p*x[dum] - x[dum]**2)
+            dyc_dm[dum] = 1.0/(p**2) * (2*p*x[dum] - x[dum]**2)
         if p < 1:
-            dyc_dm[~dum] = 1/(1-p)**2 * ((1-2*p)+2*p*x[~dum]-x[~dum]**2)
+            dyc_dm[~dum] = 1.0/((1-p)**2) * (1 - 2*p + 2*p*x[~dum] - x[~dum]**2)
         
         yc = m*dyc_dm
         
@@ -46,15 +51,14 @@ class NacaFourDigitAirfoil():
         dum = x <= p
         dyc_dx = np.zeros(x.shape)
         if p > 0:
-            dyc_dx[dum] = 2*m/p**2 * (p-x[dum])
+            dyc_dx[dum] = 2.0*m/(p**2) * (p - x[dum])
         if p < 1:
-            dyc_dx[~dum] = 2*m/(1-p**2)*(p-x[~dum])
+            dyc_dx[~dum] = 2.0*m/((1-p)**2)*(p - x[~dum])
         return np.arctan(dyc_dx)
 
     def get_upper(self, x:np.array):
         yt = self.get_thickness(x)
         yc = self.get_camber(x)
-        y = yc + 0.5*yt
         
         theta = self.get_camber_angle(x)
         xu = x - yt*np.sin(theta)
@@ -65,10 +69,9 @@ class NacaFourDigitAirfoil():
     def get_lower(self, x:np.array):
         yt = self.get_thickness(x)
         yc = self.get_camber(x)
-        y = yc - 0.5*yt
-        
+
         theta = self.get_camber_angle(x)
         xl = x + yt*np.sin(theta)
-        yl = y - yt*np.cos(theta)
+        yl = yc - yt*np.cos(theta)
         
         return xl, yl
