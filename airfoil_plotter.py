@@ -115,11 +115,11 @@ class GuiData:
         self.naca_params = None
         self.imported_chord = 1.0
     
-    def user_select_file_and_update(self):
+    def user_select_file_and_update(self, naca_data_frame):
         self.data_filename = tk.filedialog.askopenfilename(title="Select the airfoil data file")
         if self.data_filename is not None and self.data_filename != '':
             self.import_file(self.data_filename)
-            self.plot_stuff()
+            self.plot_stuff(naca_data_frame)
     
     def import_file(self, filename:str):
         self.imported_data = np.loadtxt(filename, delimiter=' ')
@@ -134,11 +134,13 @@ class GuiData:
         xl, yl = naca_data_frame.get_lower_surface()
         
         # Update the plot
+        
         ax = self.fig.axes[0]
         ax.clear()
         sf = self.imported_chord
-        ax.plot(self.imported_data[:,0]/sf, self.imported_data[:,1]/sf)
-        ax.plot(np.concatenate((xu,xl)), np.concatenate((yu, yl), 0))
+        if self.imported_data is not None:
+            ax.plot(self.imported_data[:,0]/sf, self.imported_data[:,1]/sf, color="blue")
+        ax.plot(np.concatenate((xu,xl)), np.concatenate((yu, yl), 0), color="orange")
         ax.axis('equal')
         ax.grid(which='major')
         ax.minorticks_on()
@@ -201,7 +203,7 @@ def main():
         file_select_frame,
         text='Select File',
         width=round(GUI_BUTTON_WIDTH),
-        command=lambda: gui_data.user_select_file_and_update())
+        command=lambda: gui_data.user_select_file_and_update(naca_data_frame))
     file_select_button.pack(side=tk.TOP)
     
     chord_length_entry = tk.Entry(
@@ -218,9 +220,7 @@ def main():
     chord_length_button.pack(side=tk.LEFT)
     
     
-    # Fire it up
-    filename = "D:\Documents\Personal\Projects\RC\Stratosurfer\Airfoil Analysis\stratosurfer.dat"#tk.filedialog.askfilename(title="Select the airfoil data file")
-    gui_data.import_file(filename)
+    # Start GUI
     gui_data.plot_stuff(naca_data_frame)
 
     root.mainloop()
