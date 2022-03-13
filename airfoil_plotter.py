@@ -191,17 +191,6 @@ class GuiData:
     
     def plot_stuff(self, naca_data_frame):
         
-        # Initial guess
-        #m = 5 / 100
-        #p = 3 / 10
-        #t = 8 / 100
-        
-        # Solve airfoil
-        #xu = np.arange(1, 0, -0.0001)
-        #yu, xu = upper(xu, m, p, t)
-        #xl = np.arange(0, 1, 0.0001)
-        #yl, xl = lower(xl, m, p, t)
-        
         xu, yu = naca_data_frame.get_upper_surface()
         xl, yl = naca_data_frame.get_lower_surface()
         
