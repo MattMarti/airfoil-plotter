@@ -60,7 +60,7 @@ class NacaFourDigitAirfoil():
         xu = x - yt*np.sin(theta)
         yu = yc + yt*np.cos(theta)
         
-        return yu, xu
+        return xu, yu
         
     def get_lower(self, x:np.array):
         yt = self.get_thickness(x)
@@ -71,4 +71,4 @@ class NacaFourDigitAirfoil():
         xl = x + yt*np.sin(theta)
         yl = y - yt*np.cos(theta)
         
-        return yl, xl
+        return xl, yl
