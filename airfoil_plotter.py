@@ -11,6 +11,8 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 
+from airfoil_defs.naca_four_digit_airfoil import NacaFourDigitAirfoil
+
 
 GUI_BUTTON_WIDTH = 20
 GUI_BUTTON_PADDING = 20
@@ -20,75 +22,10 @@ def empty_func():
     pass
 
 
-def thickness(x, t):
-    """
-    x - horizontal position (0 to 1)
-    t - max thickness divided by chord length (0 to 1)
-    """
-    dyt_dt = 5 * (0.2969 * np.sqrt(x) - 0.1260*x - 0.3516*x**2 + 0.2843*x**3 - 0.1015*x**4)
-    yt = t * dyt_dt
-    return yt
-
-
-def camber(x, m, p):
-    """
-    x - horizontal position (0 to 1)
-    m - max camber
-    p - location of max camber
-    """
-    dum = x <= p
-    
-    dyc_dm = np.zeros(x.shape)
-    if p > 0:
-        dyc_dm[dum] = 1/p**2 * (2*p*x[dum] - x[dum]**2)
-    if p < 1:
-        dyc_dm[~dum] = 1/(1-p)**2 * ((1-2*p)+2*p*x[~dum]-x[~dum]**2)
-    
-    yc = m*dyc_dm
-    
-    return yc
-
-   
-def camber_angle(x, m, p):
-    dum = x <= p
-    dyc_dx = np.zeros(x.shape)
-    if p > 0:
-        dyc_dx[dum] = 2*m/p**2 * (p-x[dum])
-    if p < 1:
-        dyc_dx[~dum] = 2*m/(1-p**2)*(p-x[~dum])
-    return np.arctan(dyc_dx)
-
-
-def upper(x, m, p, t):
-    yt = thickness(x, t)
-    yc = camber(x, m, p)
-    y = yc + 0.5*yt
-    
-    theta = camber_angle(x, m, p)
-    xu = x - yt*np.sin(theta)
-    yu = yc + yt*np.cos(theta)
-    
-    return yu, xu
-    
-
-def lower(x, m, p, t):
-    yt = thickness(x, t)
-    yc = camber(x, m, p)
-    y = yc - 0.5*yt
-    
-    theta = camber_angle(x, m, p)
-    xl = x + yt*np.sin(theta)
-    yl = y - yt*np.cos(theta)
-    
-    return yl, xl
-
-
 class NacaFourDigitFrame:
     
     def __init__(self):
-        self.m = 0
-        self.p = 3
-        self.t = 10
+        pass
     
     def set_gui_options(self, frame):
         naca_digit_label = tk.Label(
@@ -102,7 +39,7 @@ class NacaFourDigitFrame:
         m_label = tk.Label(
             m_frame,
             text='M',
-            width=round(GUI_BUTTON_WIDTH/2))
+            width=round(GUI_BUTTON_WIDTH/4))
         m_label.pack(side=tk.LEFT)
         
         self.m_entry = tk.Entry(
@@ -117,7 +54,7 @@ class NacaFourDigitFrame:
         p_label = tk.Label(
             p_frame,
             text='P',
-            width=round(GUI_BUTTON_WIDTH/2))
+            width=round(GUI_BUTTON_WIDTH/4))
         p_label.pack(side=tk.LEFT)
         
         self.p_entry = tk.Entry(
@@ -132,7 +69,7 @@ class NacaFourDigitFrame:
         t_label = tk.Label(
             t_frame,
             text='T',
-            width=round(GUI_BUTTON_WIDTH/2))
+            width=round(GUI_BUTTON_WIDTH/4))
         t_label.pack(side=tk.LEFT)
         
         self.t_entry = tk.Entry(
@@ -142,28 +79,30 @@ class NacaFourDigitFrame:
         self.t_entry.insert(0, "8")
     
     def get_m(self):
-        return int(self.m_entry.get()) / 100
+        return int(self.m_entry.get())
     
     def get_p(self):
-        return int(self.p_entry.get()) / 10
+        return int(self.p_entry.get())
     
     def get_t(self):
-        return int(self.t_entry.get()) / 100
+        return int(self.t_entry.get())
     
     def get_upper_surface(self):
         m = self.get_m()
         p = self.get_p()
         t = self.get_t()
+        airfoil = NacaFourDigitAirfoil(m, p, t)
         xu = np.arange(1, 0, -0.0001)
-        yu, xu = upper(xu, m, p, t)
+        yu, xu = airfoil.get_upper(xu)
         return xu, yu
     
     def get_lower_surface(self):
         m = self.get_m()
         p = self.get_p()
         t = self.get_t()
+        airfoil = NacaFourDigitAirfoil(m, p, t)
         xl = np.arange(0, 1, 0.0001)
-        yl, xl = lower(xl, m, p, t)
+        yl, xl = airfoil.get_lower(xl)
         return xl, yl
     
 
