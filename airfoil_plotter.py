@@ -92,8 +92,8 @@ class NacaFourDigitFrame:
         p = self.get_p()
         t = self.get_t()
         airfoil = NacaFourDigitAirfoil(m, p, t)
-        xu = np.arange(1, 0, -0.0001)
-        yu, xu = airfoil.get_upper(xu)
+        xu = np.linspace(1, 0, 10000)
+        xu, yu = airfoil.get_upper(xu)
         return xu, yu
     
     def get_lower_surface(self):
@@ -101,8 +101,8 @@ class NacaFourDigitFrame:
         p = self.get_p()
         t = self.get_t()
         airfoil = NacaFourDigitAirfoil(m, p, t)
-        xl = np.arange(0, 1, 0.0001)
-        yl, xl = airfoil.get_lower(xl)
+        xl = np.linspace(0, 1, 10000)
+        xl, yl = airfoil.get_lower(xl)
         return xl, yl
     
 
