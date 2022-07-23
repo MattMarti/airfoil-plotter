@@ -122,7 +122,7 @@ class GuiData:
             self.plot_stuff(naca_data_frame)
     
     def import_file(self, filename:str):
-        self.imported_data = np.loadtxt(filename, delimiter=' ')
+        self.imported_data = np.loadtxt(filename)
     
     def set_imported_chord(self, chord, naca_data_frame):
         self.imported_chord = chord
