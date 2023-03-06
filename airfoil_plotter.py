@@ -131,6 +131,8 @@ class AirfoilImportSettings:
     def __init__(self):
         self.filename = None
         self.sf = 1.0
+        self.x_pos = 0.0
+        self.y_pos = 0.0
         self.invert_xy = False
 
 
@@ -156,6 +158,14 @@ class GuiData:
         self.import_settings.sf = sf
         self.update_plot()
 
+    def set_imported_position_x(self, x):
+        self.import_settings.x_pos = x
+        self.update_plot()
+
+    def set_imported_position_y(self, y):
+        self.import_settings.y_pos = y
+        self.update_plot()
+
     def toggle_switch_imported_xy(self):
         self.import_settings.invert_xy = not self.import_settings.invert_xy
         self.update_plot()
@@ -166,6 +176,8 @@ class GuiData:
 
         # Imported airfoil
         sf = self.import_settings.sf
+        x_offset = self.import_settings.x_pos
+        y_offset = self.import_settings.y_pos
         if self.airfoil_loader.imported_data is not None:
             if not self.import_settings.invert_xy:
                 x = self.airfoil_loader.x
@@ -173,7 +185,7 @@ class GuiData:
             else:
                 x = self.airfoil_loader.y
                 y = self.airfoil_loader.x
-            ax.plot(x/sf, y/sf, color="blue")
+            ax.plot(x/sf + x_offset, y/sf + y_offset, color="blue")
 
         # Calculated airfoil
         xu, yu = self.airfoil_builder.get_upper_surface()
@@ -259,6 +271,38 @@ def main():
         width=round(GUI_BUTTON_WIDTH/2),
         command=lambda: gui_data.set_imported_scale_factor(float(chord_length_entry.get())))
     chord_length_button.pack(side=tk.LEFT)
+
+    position_x_frame = tk.Frame(master=file_select_frame)
+    position_x_frame.pack(side=tk.TOP)
+
+    position_x_entry = tk.Entry(
+        position_x_frame,
+        width=round(GUI_BUTTON_WIDTH/2))
+    position_x_entry.pack(side=tk.RIGHT)
+    position_x_entry.insert(0, '0')
+
+    position_x_refresh_button = tk.Button(
+        position_x_frame,
+        text="Position X",
+        width=round(GUI_BUTTON_WIDTH/2),
+        command=lambda: gui_data.set_imported_position_x(float(position_x_entry.get())))
+    position_x_refresh_button.pack(side=tk.LEFT)
+
+    position_y_frame = tk.Frame(master=file_select_frame)
+    position_y_frame.pack(side=tk.TOP)
+
+    position_y_entry = tk.Entry(
+        position_y_frame,
+        width=round(GUI_BUTTON_WIDTH/2))
+    position_y_entry.pack(side=tk.RIGHT)
+    position_y_entry.insert(0, '0')
+
+    position_y_refresh_button = tk.Button(
+        position_y_frame,
+        text="Position Y",
+        width=round(GUI_BUTTON_WIDTH/2),
+        command=lambda: gui_data.set_imported_position_y(float(position_y_entry.get())))
+    position_y_refresh_button.pack(side=tk.LEFT)
 
     switch_xy_button = tk.Button(
         file_select_frame,
