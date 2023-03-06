@@ -185,7 +185,7 @@ class GuiData:
             else:
                 x = self.airfoil_loader.y
                 y = self.airfoil_loader.x
-            ax.plot(x/sf + x_offset, y/sf + y_offset, color="blue")
+            ax.plot(x*sf + x_offset, y*sf + y_offset, color="blue")
 
         # Calculated airfoil
         xu, yu = self.airfoil_builder.get_upper_surface()
@@ -269,7 +269,7 @@ def main():
         chord_length_frame,
         text='Scale Factor',
         width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.set_imported_scale_factor(float(chord_length_entry.get())))
+        command=lambda: gui_data.set_imported_scale_factor(eval(chord_length_entry.get())))
     chord_length_button.pack(side=tk.LEFT)
 
     position_x_frame = tk.Frame(master=file_select_frame)
@@ -285,7 +285,7 @@ def main():
         position_x_frame,
         text="Position X",
         width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.set_imported_position_x(float(position_x_entry.get())))
+        command=lambda: gui_data.set_imported_position_x(eval(position_x_entry.get())))
     position_x_refresh_button.pack(side=tk.LEFT)
 
     position_y_frame = tk.Frame(master=file_select_frame)
@@ -301,7 +301,7 @@ def main():
         position_y_frame,
         text="Position Y",
         width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.set_imported_position_y(float(position_y_entry.get())))
+        command=lambda: gui_data.set_imported_position_y(eval(position_y_entry.get())))
     position_y_refresh_button.pack(side=tk.LEFT)
 
     switch_xy_button = tk.Button(
