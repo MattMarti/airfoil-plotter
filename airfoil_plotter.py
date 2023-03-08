@@ -22,6 +22,12 @@ def empty_func():
     pass
 
 
+def rotate(x, y, angle):
+    x_rotated = x * np.cos(angle) - y * np.sin(angle)
+    y_rotated = x * np.sin(angle) + y * np.cos(angle)
+    return x_rotated, y_rotated
+
+
 class NacaFourDigitSettingsFrame:
 
     def __init__(self):
@@ -78,6 +84,21 @@ class NacaFourDigitSettingsFrame:
         self.t_entry.pack(side=tk.RIGHT)
         self.t_entry.insert(0, "8")
 
+        angle_frame = tk.Frame(master=frame)
+        angle_frame.pack(side=tk.TOP)
+
+        self.angle_label = tk.Label(
+            angle_frame,
+            text="deg",
+            width=round(GUI_BUTTON_WIDTH/4))
+        self.angle_label.pack(side=tk.LEFT)
+
+        self.angle_entry = tk.Entry(
+            angle_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.angle_entry.pack(side=tk.RIGHT)
+        self.angle_entry.insert(0, "0")
+
     def get_m(self):
         return int(self.m_entry.get())
 
@@ -87,23 +108,28 @@ class NacaFourDigitSettingsFrame:
     def get_t(self):
         return int(self.t_entry.get())
 
+    def get_angle(self):
+        return eval(self.angle_entry.get())
+
     def get_upper_surface(self):
         m = self.get_m()
         p = self.get_p()
         t = self.get_t()
+        aoa = - np.deg2rad(self.get_angle())
         airfoil = NacaFourDigitAirfoil(m, p, t)
         xu = np.linspace(1, 0, 10000)
         xu, yu = airfoil.get_upper(xu)
-        return xu, yu
+        return rotate(xu, yu, aoa)
 
     def get_lower_surface(self):
         m = self.get_m()
         p = self.get_p()
         t = self.get_t()
+        aoa = - np.deg2rad(self.get_angle())
         airfoil = NacaFourDigitAirfoil(m, p, t)
         xl = np.linspace(0, 1, 10000)
         xl, yl = airfoil.get_lower(xl)
-        return xl, yl
+        return rotate(xl, yl, aoa)
 
 
 class AirfoilLoader:
