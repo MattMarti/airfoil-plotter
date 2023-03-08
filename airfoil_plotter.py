@@ -99,33 +99,37 @@ class NacaFourDigitSettingsFrame:
         self.angle_entry.pack(side=tk.RIGHT)
         self.angle_entry.insert(0, "0")
 
-    def get_m(self):
+    @property
+    def m(self):
         return int(self.m_entry.get())
 
-    def get_p(self):
+    @property
+    def p(self):
         return int(self.p_entry.get())
 
-    def get_t(self):
+    @property
+    def t(self):
         return int(self.t_entry.get())
 
-    def get_angle(self):
+    @property
+    def angle(self):
         return eval(self.angle_entry.get())
 
     def get_upper_surface(self):
-        m = self.get_m()
-        p = self.get_p()
-        t = self.get_t()
-        aoa = - np.deg2rad(self.get_angle())
+        m = self.m
+        p = self.p
+        t = self.t
+        aoa = - np.deg2rad(self.angle)
         airfoil = NacaFourDigitAirfoil(m, p, t)
         xu = np.linspace(1, 0, 10000)
         xu, yu = airfoil.get_upper(xu)
         return rotate(xu, yu, aoa)
 
     def get_lower_surface(self):
-        m = self.get_m()
-        p = self.get_p()
-        t = self.get_t()
-        aoa = - np.deg2rad(self.get_angle())
+        m = self.m
+        p = self.p
+        t = self.t
+        aoa = - np.deg2rad(self.angle)
         airfoil = NacaFourDigitAirfoil(m, p, t)
         xl = np.linspace(0, 1, 10000)
         xl, yl = airfoil.get_lower(xl)
