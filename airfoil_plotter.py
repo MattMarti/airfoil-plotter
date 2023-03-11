@@ -157,11 +157,11 @@ class AirfoilLoaderFrame:
         self.chord_length_entry.pack(side=tk.RIGHT)
         self.chord_length_entry.insert(0, '1.0')
 
-        self.chord_length_button = tk.Button(
+        chord_length_button = tk.Label(
             chord_length_frame,
             text='Scale Factor',
             width=round(GUI_BUTTON_WIDTH/2))
-        self.chord_length_button.pack(side=tk.LEFT)
+        chord_length_button.pack(side=tk.LEFT)
 
         position_x_frame = tk.Frame(master=file_select_frame)
         position_x_frame.pack(side=tk.TOP)
@@ -172,11 +172,11 @@ class AirfoilLoaderFrame:
         self.position_x_entry.pack(side=tk.RIGHT)
         self.position_x_entry.insert(0, '0')
 
-        self.position_x_refresh_button = tk.Button(
+        position_x_refresh_button = tk.Label(
             position_x_frame,
             text="Position X",
             width=round(GUI_BUTTON_WIDTH/2))
-        self.position_x_refresh_button.pack(side=tk.LEFT)
+        position_x_refresh_button.pack(side=tk.LEFT)
 
         position_y_frame = tk.Frame(master=file_select_frame)
         position_y_frame.pack(side=tk.TOP)
@@ -187,11 +187,11 @@ class AirfoilLoaderFrame:
         self.position_y_entry.pack(side=tk.RIGHT)
         self.position_y_entry.insert(0, '0')
 
-        self.position_y_refresh_button = tk.Button(
+        position_y_refresh_button = tk.Label(
             position_y_frame,
             text="Position Y",
             width=round(GUI_BUTTON_WIDTH/2))
-        self.position_y_refresh_button.pack(side=tk.LEFT)
+        position_y_refresh_button.pack(side=tk.LEFT)
 
         self.switch_xy = False
         self.switch_xy_button = tk.Button(
@@ -274,15 +274,6 @@ class GuiData:
     def _set_import_buttons(self):
         self.airfoil_loader.file_select_button.configure(
             command=lambda: self.user_select_file_and_update()
-        )
-        self.airfoil_loader.chord_length_button.configure(
-            command=lambda: self.update_plot()
-        )
-        self.airfoil_loader.position_x_refresh_button.configure(
-            command=lambda: self.update_plot()
-        )
-        self.airfoil_loader.position_y_refresh_button.configure(
-            command=lambda: self.update_plot()
         )
         self.airfoil_loader.switch_xy_button.configure(
             command=lambda: self._toggle_switch_xy()
