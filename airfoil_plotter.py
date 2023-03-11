@@ -30,10 +30,7 @@ def rotate(x, y, angle):
 
 class NacaFourDigitSettingsFrame:
 
-    def __init__(self):
-        pass
-
-    def set_gui_options(self, frame):
+    def __init__(self, frame):
         naca_digit_label = tk.Label(
             master=frame,
             text='NACA 4 Digit')
@@ -136,10 +133,75 @@ class NacaFourDigitSettingsFrame:
         return rotate(xl, yl, aoa)
 
 
-class AirfoilLoader:
+class AirfoilLoaderFrame:
 
-    def __init__(self):
+    def __init__(self, frame):
         self.imported_data = None
+        self.invert_xy = False
+
+        file_select_frame = tk.Frame(master=frame)
+        file_select_frame.pack(side=tk.RIGHT)
+
+        self.file_select_button = tk.Button(
+            file_select_frame,
+            text='Select File',
+            width=round(GUI_BUTTON_WIDTH))
+        self.file_select_button.pack(side=tk.TOP)
+
+        chord_length_frame = tk.Frame(master=file_select_frame)
+        chord_length_frame.pack(side=tk.TOP)
+
+        self.chord_length_entry = tk.Entry(
+            chord_length_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.chord_length_entry.pack(side=tk.RIGHT)
+        self.chord_length_entry.insert(0, '1.0')
+
+        self.chord_length_button = tk.Button(
+            chord_length_frame,
+            text='Scale Factor',
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.chord_length_button.pack(side=tk.LEFT)
+
+        position_x_frame = tk.Frame(master=file_select_frame)
+        position_x_frame.pack(side=tk.TOP)
+
+        self.position_x_entry = tk.Entry(
+            position_x_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.position_x_entry.pack(side=tk.RIGHT)
+        self.position_x_entry.insert(0, '0')
+
+        self.position_x_refresh_button = tk.Button(
+            position_x_frame,
+            text="Position X",
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.position_x_refresh_button.pack(side=tk.LEFT)
+
+        position_y_frame = tk.Frame(master=file_select_frame)
+        position_y_frame.pack(side=tk.TOP)
+
+        self.position_y_entry = tk.Entry(
+            position_y_frame,
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.position_y_entry.pack(side=tk.RIGHT)
+        self.position_y_entry.insert(0, '0')
+
+        self.position_y_refresh_button = tk.Button(
+            position_y_frame,
+            text="Position Y",
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.position_y_refresh_button.pack(side=tk.LEFT)
+
+        self.switch_xy = False
+        self.switch_xy_button = tk.Button(
+            file_select_frame,
+            text="Switch XY",
+            width=round(GUI_BUTTON_WIDTH/2))
+        self.switch_xy_button.pack(side=tk.TOP)
+
+    def toggle_switch_xy(self):
+        self.invert_xy = ~self.invert_xy
 
     @property
     def x(self):
@@ -153,27 +215,82 @@ class AirfoilLoader:
             return None
         return self.imported_data[:,1]
 
+    @property
+    def sf(self):
+        return eval(self.chord_length_entry.get())
+
+    @property
+    def x_pos(self):
+        return eval(self.position_x_entry.get())
+
+    @property
+    def y_pos(self):
+        return eval(self.position_y_entry.get())
+
     def import_file(self, filename:str):
         self.imported_data = np.loadtxt(filename)
 
 
-class AirfoilImportSettings:
-    def __init__(self):
-        self.filename = None
-        self.sf = 1.0
-        self.x_pos = 0.0
-        self.y_pos = 0.0
-        self.invert_xy = False
-
-
 class GuiData:
 
-    def __init__(self, fig, airfoil_builder):
-        self.fig = fig
-        self.airfoil_builder = airfoil_builder
-        self.airfoil_loader = AirfoilLoader()
-        self.import_settings = AirfoilImportSettings()
-        self.naca_params = None
+    def __init__(self, root_frame):
+
+        # Figure
+        self.fig = Figure(figsize=(5,4), dpi=100)
+        ax = self.fig.add_subplot(111)
+
+        canvas = FigureCanvasTkAgg(self.fig, master=root_frame)  # A tk.DrawingArea.
+        canvas.draw()
+
+        toolbar = NavigationToolbar2Tk(canvas, root_frame, pack_toolbar=False)
+        toolbar.update()
+
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        # Settings
+        settings_frame = tk.Frame(master=root_frame)
+        settings_frame.pack(side=tk.RIGHT)
+
+        # Digit Settings
+        naca_digit_frame = tk.Frame(master=settings_frame)
+        naca_digit_frame.pack(side=tk.RIGHT)
+        self.airfoil_builder = NacaFourDigitSettingsFrame(naca_digit_frame)
+
+        # Import Settings
+        import_settings_frame = tk.Frame(master=settings_frame)
+        import_settings_frame.pack(side=tk.RIGHT)
+        self.airfoil_loader = AirfoilLoaderFrame(import_settings_frame)
+        self._set_import_buttons()
+
+        # Update plots
+        ok_button = tk.Button(
+            naca_digit_frame,
+            text='Plot',
+            width=round(GUI_BUTTON_WIDTH/2),
+            command=lambda: self.update_plot())
+        ok_button.pack(side=tk.BOTTOM)
+
+    def _set_import_buttons(self):
+        self.airfoil_loader.file_select_button.configure(
+            command=lambda: self.user_select_file_and_update()
+        )
+        self.airfoil_loader.chord_length_button.configure(
+            command=lambda: self.update_plot()
+        )
+        self.airfoil_loader.position_x_refresh_button.configure(
+            command=lambda: self.update_plot()
+        )
+        self.airfoil_loader.position_y_refresh_button.configure(
+            command=lambda: self.update_plot()
+        )
+        self.airfoil_loader.switch_xy_button.configure(
+            command=lambda: self._toggle_switch_xy()
+        )
+
+    def _toggle_switch_xy(self):
+        self.airfoil_loader.toggle_switch_xy()
+        self.update_plot()
 
     def user_select_file_and_update(self):
         filename = tk.filedialog.askopenfilename(title="Select the airfoil data file")
@@ -184,18 +301,6 @@ class GuiData:
     def import_file(self, filename:str):
         self.airfoil_loader.import_file(filename=filename)
 
-    def set_imported_scale_factor(self, sf):
-        self.import_settings.sf = sf
-        self.update_plot()
-
-    def set_imported_position_x(self, x):
-        self.import_settings.x_pos = x
-        self.update_plot()
-
-    def set_imported_position_y(self, y):
-        self.import_settings.y_pos = y
-        self.update_plot()
-
     def toggle_switch_imported_xy(self):
         self.import_settings.invert_xy = not self.import_settings.invert_xy
         self.update_plot()
@@ -205,11 +310,11 @@ class GuiData:
         ax.clear()
 
         # Imported airfoil
-        sf = self.import_settings.sf
-        x_offset = self.import_settings.x_pos
-        y_offset = self.import_settings.y_pos
+        sf = self.airfoil_loader.sf
+        x_offset = self.airfoil_loader.x_pos
+        y_offset = self.airfoil_loader.y_pos
         if self.airfoil_loader.imported_data is not None:
-            if not self.import_settings.invert_xy:
+            if not self.airfoil_loader.invert_xy:
                 x = self.airfoil_loader.x
                 y = self.airfoil_loader.y
             else:
@@ -239,112 +344,8 @@ def main():
     root = tk.Tk()
     root.title('Airfoil Plotter')
 
-    # Airfoil builder
-    naca_surface_builder_frame = NacaFourDigitSettingsFrame()
-
-    # Figure
-    fig = Figure(figsize=(5,4), dpi=100)
-    ax = fig.add_subplot(111)
-
-    canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
-    canvas.draw()
-
-    toolbar = NavigationToolbar2Tk(canvas, root, pack_toolbar=False)
-    toolbar.update()
-
-    toolbar.pack(side=tk.BOTTOM, fill=tk.X)
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-    gui_data = GuiData(fig, naca_surface_builder_frame)
-
-    # Settings
-    settings_frame = tk.Frame(master=root)
-    settings_frame.pack(side=tk.RIGHT)
-
-    # Digit Settings
-    naca_digit_frame = tk.Frame(master=settings_frame)
-    naca_digit_frame.pack(side=tk.RIGHT)
-    naca_surface_builder_frame.set_gui_options(naca_digit_frame)
-
-    # Plotting
-    ok_button = tk.Button(
-        naca_digit_frame,
-        text='Plot',
-        width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.update_plot())
-    ok_button.pack(side=tk.BOTTOM)
-
-
-    # Import
-    file_select_frame = tk.Frame(master=settings_frame)
-    file_select_frame.pack(side=tk.RIGHT)
-
-    file_select_button = tk.Button(
-        file_select_frame,
-        text='Select File',
-        width=round(GUI_BUTTON_WIDTH),
-        command=lambda: gui_data.user_select_file_and_update())
-    file_select_button.pack(side=tk.TOP)
-
-    chord_length_frame = tk.Frame(master=file_select_frame)
-    chord_length_frame.pack(side=tk.TOP)
-
-    chord_length_entry = tk.Entry(
-        chord_length_frame,
-        width=round(GUI_BUTTON_WIDTH/2))
-    chord_length_entry.pack(side=tk.RIGHT)
-    chord_length_entry.insert(0, '1.0')
-
-    chord_length_button = tk.Button(
-        chord_length_frame,
-        text='Scale Factor',
-        width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.set_imported_scale_factor(eval(chord_length_entry.get())))
-    chord_length_button.pack(side=tk.LEFT)
-
-    position_x_frame = tk.Frame(master=file_select_frame)
-    position_x_frame.pack(side=tk.TOP)
-
-    position_x_entry = tk.Entry(
-        position_x_frame,
-        width=round(GUI_BUTTON_WIDTH/2))
-    position_x_entry.pack(side=tk.RIGHT)
-    position_x_entry.insert(0, '0')
-
-    position_x_refresh_button = tk.Button(
-        position_x_frame,
-        text="Position X",
-        width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.set_imported_position_x(eval(position_x_entry.get())))
-    position_x_refresh_button.pack(side=tk.LEFT)
-
-    position_y_frame = tk.Frame(master=file_select_frame)
-    position_y_frame.pack(side=tk.TOP)
-
-    position_y_entry = tk.Entry(
-        position_y_frame,
-        width=round(GUI_BUTTON_WIDTH/2))
-    position_y_entry.pack(side=tk.RIGHT)
-    position_y_entry.insert(0, '0')
-
-    position_y_refresh_button = tk.Button(
-        position_y_frame,
-        text="Position Y",
-        width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.set_imported_position_y(eval(position_y_entry.get())))
-    position_y_refresh_button.pack(side=tk.LEFT)
-
-    switch_xy_button = tk.Button(
-        file_select_frame,
-        text="Switch XY",
-        width=round(GUI_BUTTON_WIDTH/2),
-        command=lambda: gui_data.toggle_switch_imported_xy())
-    switch_xy_button.pack(side=tk.TOP)
-
-
-    # Start GUI
+    gui_data = GuiData(root)
     gui_data.update_plot()
-
     root.mainloop()
 
 
