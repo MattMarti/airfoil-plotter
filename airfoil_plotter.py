@@ -137,7 +137,6 @@ class AirfoilLoaderFrame:
 
     def __init__(self, frame):
         self.imported_data = None
-        self.invert_xy = False
 
         file_select_frame = tk.Frame(master=frame)
         file_select_frame.pack(side=tk.RIGHT)
@@ -193,15 +192,17 @@ class AirfoilLoaderFrame:
             width=round(GUI_BUTTON_WIDTH/2))
         position_y_refresh_button.pack(side=tk.LEFT)
 
-        self.switch_xy = False
-        self.switch_xy_button = tk.Button(
+        self.invert_xy_var = tk.IntVar()
+        self.switch_xy_button = tk.Checkbutton(
             file_select_frame,
             text="Switch XY",
-            width=round(GUI_BUTTON_WIDTH/2))
+            width=round(GUI_BUTTON_WIDTH/2),
+            variable=self.invert_xy_var)
         self.switch_xy_button.pack(side=tk.TOP)
 
-    def toggle_switch_xy(self):
-        self.invert_xy = ~self.invert_xy
+    @property
+    def invert_xy(self):
+        return bool(self.invert_xy_var.get())
 
     @property
     def x(self):
@@ -261,7 +262,9 @@ class GuiData:
         import_settings_frame = tk.Frame(master=settings_frame)
         import_settings_frame.pack(side=tk.RIGHT)
         self.airfoil_loader = AirfoilLoaderFrame(import_settings_frame)
-        self._set_import_buttons()
+        self.airfoil_loader.file_select_button.configure(
+            command=lambda: self.user_select_file_and_update()
+        )
 
         # Update plots
         ok_button = tk.Button(
@@ -270,18 +273,6 @@ class GuiData:
             width=round(GUI_BUTTON_WIDTH/2),
             command=lambda: self.update_plot())
         ok_button.pack(side=tk.BOTTOM)
-
-    def _set_import_buttons(self):
-        self.airfoil_loader.file_select_button.configure(
-            command=lambda: self.user_select_file_and_update()
-        )
-        self.airfoil_loader.switch_xy_button.configure(
-            command=lambda: self._toggle_switch_xy()
-        )
-
-    def _toggle_switch_xy(self):
-        self.airfoil_loader.toggle_switch_xy()
-        self.update_plot()
 
     def user_select_file_and_update(self):
         filename = tk.filedialog.askopenfilename(title="Select the airfoil data file")
